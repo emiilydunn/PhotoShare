@@ -7,7 +7,7 @@ namespace PhotoShare.Controllers
     public class HomeController : Controller
     {
 
-
+        //Constructor
         public HomeController()
         {
             
