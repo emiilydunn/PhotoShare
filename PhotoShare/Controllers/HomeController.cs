@@ -5,21 +5,21 @@ namespace PhotoShare.Controllers
 {
     public class HomeController : Controller
     {
-        // Constructor
+        //Constructor
         public HomeController()
         {
         }
 
-        // Home page - display all photos
+        //Home page - display all photos (.../ or .../Home)
         public IActionResult Index()
         {
-            // To-do: Entity Framework - fetch all photos
+            //To-do: Entity Framework - fetch all photos
 
 
-            // Create a list of photos
+            //Create a list of photos
             List<Photo> photos = new List<Photo>();
 
-            // Create photo object
+            //Create photo object
             Photo photo1 = new Photo()
             {
                 PhotoId = 1,
@@ -29,7 +29,7 @@ namespace PhotoShare.Controllers
                 IsPublic = true
             };
 
-            // Create photo object
+            //Create photo object
             Photo photo2 = new Photo();
 
             photo2.PhotoId = 2;
@@ -38,7 +38,7 @@ namespace PhotoShare.Controllers
             photo2.ImageFilename = "dog.jpg";
             photo2.IsPublic = true;
 
-            // Create photo object
+            //Create photo object
             Photo photo3 = new Photo();
 
             photo3.PhotoId = 3;
@@ -47,18 +47,19 @@ namespace PhotoShare.Controllers
             photo3.ImageFilename = "hamster.jpg";
             photo3.IsPublic = true;
 
-            // Add them to the list
+            //Add them to the list
             photos.Add(photo1);
             photos.Add(photo2);
             photos.Add(photo3);
 
-            return View();
+            //Pass photos into the View
+            return View(photos);
         }
 
-        // Display a photo by id
+        //Display a photo by id (.../Home/DisplayPhoto/#)
         public IActionResult DisplayPhoto(int id)
         {
-            // To-do: Entity Framework - fetch the photo by id
+            //To-do: Entity Framework - fetch the photo by id
 
             Photo photo = new Photo()
             {
@@ -69,9 +70,11 @@ namespace PhotoShare.Controllers
                 IsPublic = true
             };
 
-            return View();
+            //Pass photos into the view
+            return View(photo);
         }
 
+        //Privacy page: ../Home/Privacy
         public IActionResult Privacy()
         {
             return View();
