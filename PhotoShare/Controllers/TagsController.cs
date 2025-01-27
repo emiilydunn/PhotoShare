@@ -5,70 +5,63 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
-using NuGet.Versioning;
 using PhotoShare.Data;
 using PhotoShare.Models;
 
 namespace PhotoShare.Controllers
 {
-    public class PhotosController : Controller
+    public class TagsController : Controller
     {
         private readonly PhotoShareContext _context;
 
-        public PhotosController(PhotoShareContext context)
+        public TagsController(PhotoShareContext context)
         {
             _context = context;
         }
 
-        // GET: Photos
+        // GET: Tags
         public async Task<IActionResult> Index()
         {
-            var photos = await _context.Photo.ToListAsync();
-
-            return View(photos);
+            var photoShareContext = _context.Tag.Include(t => t.Photo);
+            return View(await photoShareContext.ToListAsync());
         }
 
-        // GET: Photos/Details/5
-        public async Task<IActionResult> Details(int? id)
+        // GET: Tags/Details/5
+       
+
+        // GET: Tags/Create
+        public IActionResult Create(int? id)
         {
             if (id == null)
             {
                 return NotFound();
             }
 
-            var photo = await _context.Photo.FirstOrDefaultAsync(m => m.PhotoId == id);
+            ViewData["PhotoId"] = id;
 
-            if (photo == null)
-            {
-                return NotFound();
-            }
-
-            return View(photo);
-        }
-
-        // GET: Photos/Create
-        public IActionResult Create()
-        {
             return View();
         }
 
-        // POST: Photos/Create
+        // POST: Tags/Create
         // To protect from overposting attacks, enable the specific properties you want to bind to.
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("PhotoId,Description,Location,Camera,ImageFilename,IsVisible,CreatedAt")] Photo photo)
+        public async Task<IActionResult> Create([Bind("TagId,Name,PhotoId")] Tag tag)
         {
             if (ModelState.IsValid)
             {
-                _context.Add(photo);
+                _context.Add(tag);
                 await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+
+                // re-direct to /Photos/Edit/5
+                return RedirectToAction("Edit", "Photos", new { id = tag.PhotoId });
             }
-            return View(photo);
+            ViewData["PhotoId"] = new SelectList(_context.Photo, "PhotoId", "PhotoId", tag.PhotoId);
+            return View(tag);
         }
 
-        // GET: Photos/Edit/5
+        // GET: Tags/Edit/5
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
@@ -76,24 +69,23 @@ namespace PhotoShare.Controllers
                 return NotFound();
             }
 
-            //Include the Tags list 
-            var photo = await _context.Photo.Include(m => m.Tags).FirstOrDefaultAsync(m => m.PhotoId == id);
-
-            if (photo == null)
+            var tag = await _context.Tag.FindAsync(id);
+            if (tag == null)
             {
                 return NotFound();
             }
-            return View(photo);
+            ViewData["PhotoId"] = new SelectList(_context.Photo, "PhotoId", "PhotoId", tag.PhotoId);
+            return View(tag);
         }
 
-        // POST: Photos/Edit/5
+        // POST: Tags/Edit/5
         // To protect from overposting attacks, enable the specific properties you want to bind to.
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("PhotoId,Description,Location,Camera,ImageFilename,IsVisible,CreatedAt")] Photo photo)
+        public async Task<IActionResult> Edit(int id, [Bind("TagId,Name,PhotoId")] Tag tag)
         {
-            if (id != photo.PhotoId)
+            if (id != tag.TagId)
             {
                 return NotFound();
             }
@@ -102,12 +94,12 @@ namespace PhotoShare.Controllers
             {
                 try
                 {
-                    _context.Update(photo);
+                    _context.Update(tag);
                     await _context.SaveChangesAsync();
                 }
                 catch (DbUpdateConcurrencyException)
                 {
-                    if (!PhotoExists(photo.PhotoId))
+                    if (!TagExists(tag.TagId))
                     {
                         return NotFound();
                     }
@@ -118,45 +110,63 @@ namespace PhotoShare.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
-            return View(photo);
+            ViewData["PhotoId"] = new SelectList(_context.Photo, "PhotoId", "PhotoId", tag.PhotoId);
+            return View(tag);
         }
 
-        // GET: Photos/Delete/5
+        // GET: Tags/Delete/5
         public async Task<IActionResult> Delete(int? id)
         {
+            // id is the tag id
             if (id == null)
             {
                 return NotFound();
             }
 
-            var photo = await _context.Photo
-                .FirstOrDefaultAsync(m => m.PhotoId == id);
-            if (photo == null)
+            var tag = await _context.Tag.FirstOrDefaultAsync(m => m.TagId == id);
+
+            if (tag == null)
             {
                 return NotFound();
             }
 
-            return View(photo);
+            // set the photo id to pass to return to the Photo Details page
+            var photoId = tag.PhotoId;
+
+            // Remove the tag
+            _context.Tag.Remove(tag);
+            await _context.SaveChangesAsync();
+
+            return RedirectToAction("Edit", "Photos", new { id = photoId });
         }
 
-        // POST: Photos/Delete/5
+
+        // POST: Tags/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var photo = await _context.Photo.FindAsync(id);
-            if (photo != null)
+            var tag = await _context.Tag
+                .Include(t => t.Photo)
+                .FirstOrDefaultAsync(m => m.TagId == id);
+
+            if (tag != null)
             {
-                _context.Photo.Remove(photo);
+                _context.Tag.Remove(tag);
+                await _context.SaveChangesAsync();
+
+                //Re-direct to /photos/edit/5
+                return RedirectToAction("Edit", "Photos", new { id = tag.Photo?.PhotoId });
             }
 
-            await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
+            return View(tag);
+
+            
         }
 
-        private bool PhotoExists(int id)
+        private bool TagExists(int id)
         {
-            return _context.Photo.Any(e => e.PhotoId == id);
+            return _context.Tag.Any(e => e.TagId == id);
         }
     }
 }
